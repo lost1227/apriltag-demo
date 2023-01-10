@@ -12,6 +12,8 @@ parser.add_argument('--in-dir')
 parser.add_argument('--rows', type=int, default=9)
 parser.add_argument('--cols', type=int, default=6)
 
+parser.add_argument('--camera', type=int, default=0)
+
 args = parser.parse_args()
 
 class Calibrator:
@@ -64,7 +66,7 @@ if args.in_dir:
         gray = cv.cvtColor(mat, cv.COLOR_BGR2GRAY)
         calibrator.process_image(gray)
 else:
-    capture = cv.VideoCapture(0)
+    capture = cv.VideoCapture(args.camera)
 
     while True:
         ret, frame = capture.read()
