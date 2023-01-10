@@ -20,17 +20,18 @@ repositories {
 }
 
 dependencies {
-    implementation 'edu.wpi.first.cscore:cscore-java:2023.1.1'
-    implementation 'edu.wpi.first.cscore:cscore-jni:2023.1.1:windowsx86-64'
-    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2023.1.1'
-    implementation 'edu.wpi.first.ntcore:ntcore-java:2023.1.1'
-    implementation 'edu.wpi.first.ntcore:ntcore-jni:2023.1.1:windowsx86-64'
+    implementation 'org.openpnp:opencv:4.6.0-0'
+
+    implementation 'edu.wpi.first.apriltag:apriltag-java:2023.1.1'
+    implementation 'edu.wpi.first.apriltag:apriltag-jni:2023.1.1:windowsx86-64'
+
+    implementation 'edu.wpi.first.wpimath:wpimath-java:2023.1.1'
+    implementation 'edu.wpi.first.wpimath:wpimath-jni:2023.1.1:windowsx86-64'
 
     implementation 'edu.wpi.first.wpiutil:wpiutil-java:2023.1.1'
     implementation 'edu.wpi.first.wpiutil:wpiutil-jni:2023.1.1:windowsx86-64'
-    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2023.1.1'
 
-    implementation 'org.openpnp:opencv:4.6.0-0'
+    implementation 'org.ejml:core:0.30'
 
     // Use JUnit test framework.
     testImplementation 'junit:junit:4.13.2'

@@ -3,25 +3,74 @@
  */
 package demoapriltag;
 
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.CvSink;
+import edu.wpi.first.apriltag.AprilTagDetection;
+import edu.wpi.first.apriltag.AprilTagDetector;
+import org.opencv.core.Core;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.highgui.HighGui;
+import org.opencv.core.Mat;
+import org.opencv.videoio.VideoCapture;
+import org.opencv.imgproc.Imgproc;
 
 public class App {
-    public String getGreeting() {
-        return "Hello World!";
+
+    static {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
+
+    private static void drawDetection(AprilTagDetection detection, Mat mat) {
+        for(int i = 0; i < 4; ++i) {
+            Point prev = new Point(detection.getCornerX((i + 3) % 4), detection.getCornerY((i + 3) % 4));
+            Point curr = new Point(detection.getCornerX(i), detection.getCornerY(i));
+
+            Imgproc.line(mat, prev, curr, new Scalar(255, 0, 255), 2, Imgproc.FILLED);
+        }
+
+        String label = Integer.toString(detection.getId());
+
+        var textSize = Imgproc.getTextSize(label, Imgproc.FONT_HERSHEY_PLAIN, 2, 2, null);
+        Point textPoint = new Point(detection.getCenterX() - (textSize.width / 2), detection.getCenterY() - (textSize.height / 2));
+        Imgproc.putText(mat, label, textPoint, Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 0, 255), 2);
     }
 
     public static void main(String[] args) {
-       CameraServer.startAutomaticCapture();
+        VideoCapture capture = new VideoCapture(0);
+        Mat currImg = new Mat();
+        Mat converted = new Mat();
 
-       CvSink cvSink = CameraServer.getVideo();
+        HighGui.namedWindow("main");
 
-       while(true) {
-        try {
-            Thread.sleep(100);
-        } catch(InterruptedException e) {
-            e.printStackTrace();
+        AprilTagDetector.Config config = new AprilTagDetector.Config();
+        config.numThreads = 8;
+        config.quadSigma = 0.8f;
+
+        AprilTagDetector detector = new AprilTagDetector();
+        detector.setConfig(config);
+        detector.addFamily("tag16h5", 0);
+
+        while (true) {
+            capture.read(currImg);
+            if(currImg.empty()) {
+                System.out.println("Read empty image!");
+                continue;
+            }
+
+            Imgproc.cvtColor(currImg, converted, Imgproc.COLOR_RGB2GRAY);
+
+            AprilTagDetection[] detections = detector.detect(converted);
+            for(AprilTagDetection detection : detections) {
+                drawDetection(detection, currImg);
+            }
+
+            HighGui.imshow("main", currImg);
+            int keys = HighGui.waitKey(10);
+            if(keys == java.awt.event.KeyEvent.VK_Q) {
+                break;
+            }
         }
-       }
+        HighGui.destroyAllWindows();
+        detector.close();
+        System.exit(0);
     }
 }
