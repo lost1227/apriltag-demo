@@ -31,7 +31,7 @@ dependencies {
     implementation 'edu.wpi.first.wpiutil:wpiutil-java:2023.1.1'
     implementation 'edu.wpi.first.wpiutil:wpiutil-jni:2023.1.1:windowsx86-64'
 
-    implementation 'org.ejml:core:0.30'
+    implementation 'org.ejml:ejml-all:0.34'
 
     // Use JUnit test framework.
     testImplementation 'junit:junit:4.13.2'

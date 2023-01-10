@@ -5,6 +5,9 @@ package demoapriltag;
 
 import edu.wpi.first.apriltag.AprilTagDetection;
 import edu.wpi.first.apriltag.AprilTagDetector;
+import edu.wpi.first.apriltag.AprilTagPoseEstimator;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import org.opencv.core.Core;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
@@ -19,19 +22,27 @@ public class App {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
-    private static void drawDetection(AprilTagDetection detection, Mat mat) {
+    private static void drawDetection(AprilTagDetection detection, Transform3d estimatedTransform, Mat mat) {
         for(int i = 0; i < 4; ++i) {
             Point prev = new Point(detection.getCornerX((i + 3) % 4), detection.getCornerY((i + 3) % 4));
             Point curr = new Point(detection.getCornerX(i), detection.getCornerY(i));
 
-            Imgproc.line(mat, prev, curr, new Scalar(255, 0, 255), 2, Imgproc.FILLED);
+            Imgproc.line(mat, prev, curr, new Scalar(255, 0, 255), 2, 1);
         }
 
         String label = Integer.toString(detection.getId());
 
-        var textSize = Imgproc.getTextSize(label, Imgproc.FONT_HERSHEY_PLAIN, 2, 2, null);
-        Point textPoint = new Point(detection.getCenterX() - (textSize.width / 2), detection.getCenterY() - (textSize.height / 2));
-        Imgproc.putText(mat, label, textPoint, Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(255, 0, 255), 2);
+        Point textPoint = new Point(detection.getCornerX(3), detection.getCornerY(3)-5);
+        Imgproc.putText(mat, label, textPoint, Imgproc.FONT_HERSHEY_PLAIN, 1.2, new Scalar(255, 0, 255), 2);
+
+        String translationTxt = String.format("(x:%.2f, y:%.2f, z:%.2f)", estimatedTransform.getX(), estimatedTransform.getY(), estimatedTransform.getZ());
+        textPoint.x += 20;
+        Imgproc.putText(mat, translationTxt, textPoint, Imgproc.FONT_HERSHEY_PLAIN, 1.2, new Scalar(0, 255, 0), 2);
+
+        Rotation3d rot = estimatedTransform.getRotation();
+        String rotTxt = String.format("(r:%.2f, p:%.2f, y:%.2f)", rot.getX(), rot.getY(), rot.getZ());
+        textPoint.y += 20;
+        Imgproc.putText(mat, rotTxt, textPoint, Imgproc.FONT_HERSHEY_PLAIN, 1.2, new Scalar(0, 128, 255), 2);
     }
 
     public static void main(String[] args) {
@@ -49,6 +60,15 @@ public class App {
         detector.setConfig(config);
         detector.addFamily("tag16h5", 0);
 
+        AprilTagPoseEstimator.Config poseConfig = new AprilTagPoseEstimator.Config(
+                0.1524,
+                843.613849,
+                841.550832,
+                309.407580,
+                213.981279
+        );
+        AprilTagPoseEstimator estimator = new AprilTagPoseEstimator(poseConfig);
+
         while (true) {
             capture.read(currImg);
             if(currImg.empty()) {
@@ -60,7 +80,9 @@ public class App {
 
             AprilTagDetection[] detections = detector.detect(converted);
             for(AprilTagDetection detection : detections) {
-                drawDetection(detection, currImg);
+                Transform3d estimatedPose = estimator.estimate(detection);
+                drawDetection(detection, estimatedPose, currImg);
+
             }
 
             HighGui.imshow("main", currImg);
